@@ -13,7 +13,7 @@ from datetime import datetime
 
 # Assuming your links are in a file named 'links.txt'
 # Upload this file to Colab/Notebook folder first
-with open('data/ad-links/ad_links.txt', 'r') as f:
+with open('data/00_links/ad_links.txt', 'r') as f:
     raw_links = f.readlines()
 
 # Clean whitespace and remove duplicates
@@ -102,7 +102,13 @@ def extract_ad_data(url):
 
 data_buffer = []
 failed_links = []  # Track failed links
-csv_filename = "data/ad-data/raw_house_data.csv"
+csv_filename = "data/01_raw/raw_house_data.csv"
+
+# Initialize CSV with headers if it doesn't exist
+if not os.path.isfile(csv_filename):
+    df_headers = pd.DataFrame(columns=['URL', 'Price', 'Address', 'Bedrooms', 'Bathrooms', 'House_Size', 'Land_Size', 'Description'])
+    df_headers.to_csv(csv_filename, index=False)
+    print(f"Created {csv_filename} with headers")
 
 # Create a progress bar
 print("Starting Scraping... (Press Stop if you need to pause)")
@@ -122,11 +128,8 @@ for i, link in tqdm(enumerate(unique_links), total=len(unique_links)):
     if len(data_buffer) >= 50:
         df_chunk = pd.DataFrame(data_buffer)
         
-        # If file doesn't exist, write header. If it does, append without header.
-        if not os.path.isfile(csv_filename):
-            df_chunk.to_csv(csv_filename, index=False)
-        else:
-            df_chunk.to_csv(csv_filename, mode='a', header=False, index=False)
+        # Append to existing file (headers already written at start)
+        df_chunk.to_csv(csv_filename, mode='a', header=False, index=False)
         
         data_buffer = [] # Clear buffer
         
@@ -136,17 +139,13 @@ for i, link in tqdm(enumerate(unique_links), total=len(unique_links)):
 # Save any remaining data
 if data_buffer:
     df_chunk = pd.DataFrame(data_buffer)
-    if not os.path.isfile(csv_filename):
-        df_chunk.to_csv(csv_filename, index=False)
-    else:
-        df_chunk.to_csv(csv_filename, mode='a', header=False, index=False)
+    df_chunk.to_csv(csv_filename, mode='a', header=False, index=False)
 
 print(f"Success! Data saved to {csv_filename}")
 
-# Save failed links to a timestamped file
+# Save failed links (overwrite existing file)
 if failed_links:
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    failed_links_filename = f"data/failed-links/failed_links_{timestamp}.txt"
+    failed_links_filename = "data/00_links/failed_links.txt"
     with open(failed_links_filename, 'w') as f:
         f.write("\n".join(failed_links))
     print(f"Failed links saved to {failed_links_filename} ({len(failed_links)} links)")
