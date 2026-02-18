@@ -1,2 +1,7 @@
 venv
 models
+
+# Streamlit
+.streamlit/secrets.toml
+__pycache__/
+*.pyc
